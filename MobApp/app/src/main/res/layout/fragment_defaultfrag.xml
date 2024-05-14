@@ -14,14 +14,13 @@
         android:textSize="30sp"
         android:padding="5dp"
         android:textColor="@color/black"
-        android:gravity="center"
-        android:text="WELCOM ICS STUDENT"/>
+        android:text="Steps On Making A Research"/>
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="30sp"
         android:padding="5dp"
         android:textColor="@color/black"
-        />
+        android:text="Hanap ka group\nSumuko na\nTulognalang\nCram Pag Bukas na Due"/>
 
 </LinearLayout>

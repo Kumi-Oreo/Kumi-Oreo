@@ -110,7 +110,6 @@
                 android:text="post a research" />
 
             <Button
-                android:visibility="gone"
                 android:id="@+id/task"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

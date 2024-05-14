@@ -92,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void googleLogin(View view) {
-
+        
         googleSignIn();
     }
 
