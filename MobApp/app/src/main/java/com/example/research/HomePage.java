@@ -143,15 +143,10 @@ public class HomePage extends AppCompatActivity {
         task.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.main);
-                if (currentFragment != null) {
-                    getSupportFragmentManager().beginTransaction().remove(currentFragment).commit();
-                }
 
-                getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.main, new taskfrag())
-                        .addToBackStack(null)
-                        .commit();
+                Intent intent = new Intent(HomePage.this,Todo.class);
+                startActivity(intent);
+
             }
         });
 
@@ -168,6 +163,7 @@ public class HomePage extends AppCompatActivity {
                         .commit();
             }
         });
+
 
 
     }

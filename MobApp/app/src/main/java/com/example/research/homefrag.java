@@ -1,5 +1,6 @@
 package com.example.research;
 
+import static android.content.ContentValues.TAG;
 import static androidx.core.content.ContextCompat.getSystemService;
 
 import android.app.DownloadManager;
@@ -14,6 +15,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -30,12 +32,15 @@ import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.IgnoreExtraProperties;
 import com.google.firebase.database.ValueEventListener;
 
 public class homefrag extends Fragment {
@@ -44,6 +49,9 @@ public class homefrag extends Fragment {
     DatabaseReference databaseReference;
     FirebaseAuth auth = FirebaseAuth.getInstance();
     FirebaseUser currentUser = auth.getCurrentUser();
+
+    DatabaseReference reference = FirebaseDatabase.getInstance().getReference(); // Initialize DatabaseReference
+
 
 
     @Override
@@ -73,7 +81,6 @@ public class homefrag extends Fragment {
 
 
 
-        DatabaseReference reference = FirebaseDatabase.getInstance().getReference(); // Initialize DatabaseReference
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser(); // Get current user
 
         reference.child("PDF").addListenerForSingleValueEvent(new ValueEventListener() {
@@ -85,6 +92,7 @@ public class homefrag extends Fragment {
                     for (DataSnapshot pdfSnapshot : userSnapshot.getChildren()) {
                         dataPut data = pdfSnapshot.getValue(dataPut.class);
 
+                        String mainid = userSnapshot.getKey();
                         String id = pdfSnapshot.getKey();
                         String title = data.title;
                         String abs = data.location;
@@ -96,7 +104,7 @@ public class homefrag extends Fragment {
                         CardView cardView = new CardView(getContext());
                         LinearLayout.LayoutParams cardLayoutParams = new LinearLayout.LayoutParams(
                                 LinearLayout.LayoutParams.MATCH_PARENT,
-                                LinearLayout.LayoutParams.WRAP_CONTENT
+                                LinearLayout.LayoutParams.MATCH_PARENT
                         );
                         cardLayoutParams.setMargins(30, 10, 30, 10); // Add some bottom margin between card views
                         cardView.setLayoutParams(cardLayoutParams);
@@ -109,13 +117,13 @@ public class homefrag extends Fragment {
                         layout.setOrientation(LinearLayout.VERTICAL);
                         layout.setLayoutParams(new LinearLayout.LayoutParams(
                                 LinearLayout.LayoutParams.MATCH_PARENT,
-                                LinearLayout.LayoutParams.WRAP_CONTENT));
+                                LinearLayout.LayoutParams.MATCH_PARENT));
 
                         // Create a new TextView for the data entry
                         TextView textView = new TextView(getContext());
                         LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(
                                 LinearLayout.LayoutParams.WRAP_CONTENT,
-                                LinearLayout.LayoutParams.WRAP_CONTENT
+                                LinearLayout.LayoutParams.MATCH_PARENT
                         );
                         textView.setLayoutParams(textParams);
                         textView.setPadding(16, 30, 16, 16);
@@ -127,7 +135,7 @@ public class homefrag extends Fragment {
                         Button button = new Button(getContext());
                         LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(
                                 LinearLayout.LayoutParams.MATCH_PARENT,
-                                LinearLayout.LayoutParams.WRAP_CONTENT
+                                LinearLayout.LayoutParams.MATCH_PARENT
                         );
                         buttonParams.gravity = Gravity.CENTER; // Align button to the end of the layout
                         button.setLayoutParams(buttonParams);
@@ -143,7 +151,7 @@ public class homefrag extends Fragment {
                         Button button2 = new Button(getContext());
                         LinearLayout.LayoutParams buttonParams2 = new LinearLayout.LayoutParams(
                                 LinearLayout.LayoutParams.MATCH_PARENT,
-                                LinearLayout.LayoutParams.WRAP_CONTENT
+                                LinearLayout.LayoutParams.MATCH_PARENT
                         );
                         buttonParams2.gravity = Gravity.CENTER; // Align button to the end of the layout
                         button2.setLayoutParams(buttonParams2);
@@ -180,8 +188,10 @@ public class homefrag extends Fragment {
                         button3.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
+                                FirebaseUser currentUser = auth.getCurrentUser();
 
-                                Toast.makeText(getContext(),id,Toast.LENGTH_LONG).show();
+                                 writeNewUser(currentUser.getUid(),id,mainid);
+                                 Toast.makeText(getContext(),"Saved Successfully",Toast.LENGTH_LONG).show();
 
                             }
                         });
@@ -191,6 +201,7 @@ public class homefrag extends Fragment {
                         layout.addView(button);
                         layout.addView(button2);
                         layout.addView(button3);
+
                         cardView.addView(layout);
                         linearLayout.addView(cardView);
 
@@ -276,5 +287,58 @@ public class homefrag extends Fragment {
         super.onPause();
         // Unregister the BroadcastReceiver
         getContext().unregisterReceiver(downloadReceiver);
+    }
+
+    @IgnoreExtraProperties
+    public class User {
+
+        public String research;
+
+        public User() {
+            // Default constructor required for calls to DataSnapshot.getValue(User.class)
+        }
+
+        public User(String research) {
+            this.research = research;
+        }
+
+    }
+
+    public void writeNewUser(String userId, String name,String main) {
+        DatabaseReference userRef = reference.child("saveStorage").child(userId).child(main);
+
+        // Check if the child with the given name exists
+        userRef.child(name).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (!dataSnapshot.exists()) {
+                    // Child with the given name does not exist, so add the user
+                    User user = new User(name);
+                    userRef.child(name).push().setValue(name)
+                            .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                @Override
+                                public void onComplete(@NonNull Task<Void> task) {
+                                    if (task.isSuccessful()) {
+                                        // Data successfully saved
+                                        Log.d(TAG, "User data saved for userId: " + userId + ", name: " + name);
+                                    } else {
+                                        // Handle the error
+                                        Log.w(TAG, "Error saving user data for userId: " + userId + ", name: " + name, task.getException());
+                                    }
+                                }
+                            });
+                } else {
+                    // Child with the given name already exists
+                    Toast.makeText(getContext(),"Already saved this",Toast.LENGTH_LONG).show();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                // Handle errors
+                Log.w(TAG, "Error reading user data for userId: " + userId + ", name: " + name, databaseError.toException());
+            }
+        });
+
     }
 }
