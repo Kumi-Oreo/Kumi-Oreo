@@ -12,17 +12,24 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -43,6 +50,8 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.IgnoreExtraProperties;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.Locale;
+
 public class homefrag extends Fragment {
 
     private TextView textView;
@@ -52,12 +61,18 @@ public class homefrag extends Fragment {
 
     DatabaseReference reference = FirebaseDatabase.getInstance().getReference(); // Initialize DatabaseReference
 
+    LinearLayout linearLayout;
+    EditText searchField;
 
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
+
+
+
+
 
     }
 
@@ -66,6 +81,53 @@ public class homefrag extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_homefrag, container, false);
+
+
+        searchField = view.findViewById(R.id.searchField);
+        searchField.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                // This method is called to notify you that, within s, the count characters beginning at start are about to be replaced by new text with length after.
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                // This method is called to notify you that, within s, the count characters beginning at start have just replaced old text that had length before.
+                // You can put your logic here to check if the EditText is empty and then call your function.
+                String searchText = s.toString().trim().toLowerCase();
+                if (searchText.isEmpty()) {
+                    // Call your function here
+                    handleEmptySearch();
+                }
+                serch(searchText);
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                // This method is called to notify you that, somewhere within s, the text has been changed.
+            }
+        });
+
+
+
+        searchField.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_DONE
+                        || event.getAction() == KeyEvent.ACTION_DOWN
+                        && event.getKeyCode() == KeyEvent.KEYCODE_ENTER) {
+                    // Perform search here
+                    String searchText = searchField.getText().toString().trim();
+                    performSearch(searchText);
+                    return true; // Consume the action
+                }
+                return false; // Let the system handle the action
+            }
+        });
+
+
+
         return view;
     }
 
@@ -76,17 +138,401 @@ public class homefrag extends Fragment {
         if (getView() == null) {
             return;
         }
+        linearLayout = view.findViewById(R.id.linear);
+        loadall();
+
+
+
+
+
+
+    }
+    private ProgressDialog progressDialog;
+
+    private void performSearch(String searchText) {
+
+        linearLayout.removeAllViews();
+    }
+
+    public void serch(String key){
+        linearLayout.removeAllViews();
+
+        databaseReference = FirebaseDatabase.getInstance().getReference("PDF");
+
+        databaseReference.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
+                    linearLayout.removeAllViews();
+
+                    for (DataSnapshot grandchildSnapshot : childSnapshot.getChildren()) {
+                        String name = grandchildSnapshot.child("location").getValue(String.class);
+                        String year = grandchildSnapshot.child("year").getValue(String.class);
+                        String title = grandchildSnapshot.child("title").getValue(String.class);
+                        linearLayout.removeAllViews();
+
+
+
+
+                        try {
+                            assert name != null;
+                            linearLayout.removeAllViews();
+
+                            if (name.toLowerCase(Locale.ROOT).contains(key) || year.toLowerCase(Locale.ROOT).contains(key) || Integer.parseInt(year) > Integer.parseInt(key)) {
+
+                                reference.child("PDF").child(childSnapshot.getKey()).child(grandchildSnapshot.getKey()).addListenerForSingleValueEvent(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                        dataPut data = dataSnapshot.getValue(dataPut.class);
+
+
+                                        String title = data.title;
+                                        String abs = data.location;
+                                        String name = data.name;
+                                        String url = data.url;
+                                        String year = data.year;
+                                        String pdfName = data.pdfName;
+
+                                        ScrollView scrollView = new ScrollView(getContext());
+                                        LinearLayout.LayoutParams scroll = new LinearLayout.LayoutParams(
+                                                LinearLayout.LayoutParams.MATCH_PARENT,
+                                                LinearLayout.LayoutParams.MATCH_PARENT
+                                        );
+                                        scroll.setMargins(0,0,0,30);
+                                        scrollView.setLayoutParams(scroll);
+
+
+
+
+
+                                        CardView cardView = new CardView(getContext());
+                                        LinearLayout.LayoutParams cardLayoutParams = new LinearLayout.LayoutParams(
+                                                LinearLayout.LayoutParams.MATCH_PARENT,
+                                                LinearLayout.LayoutParams.MATCH_PARENT
+                                        );
+                                        cardLayoutParams.setMargins(30, 10, 30, 10); // Add some bottom margin between card views
+                                        cardView.setLayoutParams(cardLayoutParams);
+                                        cardView.setCardBackgroundColor(ContextCompat.getColor(getContext(), R.color.white));
+                                        cardView.setRadius(50);
+
+
+                                        GradientDrawable drawable = new GradientDrawable();
+                                        drawable.setShape(GradientDrawable.RECTANGLE);
+                                        drawable.setColor(ContextCompat.getColor(getContext(), R.color.purple_200)); // Background color
+                                        drawable.setCornerRadius(50);
+
+
+                                        // Create a LinearLayout to hold TextView and Button
+                                        LinearLayout layout = new LinearLayout(getContext());
+                                        layout.setOrientation(LinearLayout.VERTICAL);
+                                        layout.setLayoutParams(new LinearLayout.LayoutParams(
+                                                LinearLayout.LayoutParams.MATCH_PARENT,
+                                                LinearLayout.LayoutParams.MATCH_PARENT));
+                                        layout.setBackgroundColor(Color.parseColor("#0097B2"));  // Use Color.parseColor to convert the hex color code to an integer
+
+                                        // Create a new TextView for the data entry
+                                        TextView textView = new TextView(getContext());
+                                        LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(
+                                                LinearLayout.LayoutParams.WRAP_CONTENT,
+                                                LinearLayout.LayoutParams.MATCH_PARENT
+                                        );
+                                        textView.setLayoutParams(textParams);
+                                        textView.setPadding(16, 30, 16, 16);
+                                        textView.setText("Title: " + title + "\n \nLocation: " + abs + "\n \nAuthor/s: " + name + "\n \nYear: " + year + "\n");
+                                        textView.setTextColor(ContextCompat.getColor(getContext(), R.color.white));
+                                        textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20); // Set text size
+
+                                        // Create a new Button for downloading PDF
+                                        Button button = new Button(getContext());
+                                        LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(
+                                                LinearLayout.LayoutParams.MATCH_PARENT,
+                                                LinearLayout.LayoutParams.MATCH_PARENT
+                                        );
+                                        buttonParams.gravity = Gravity.CENTER; // Align button to the end of the layout
+                                        button.setLayoutParams(buttonParams);
+                                        button.setText("Download PDF");
+                                        buttonParams.setMargins(30, 15, 30, 15);
+                                        button.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.purple_200));
+                                        button.setTextColor(Color.WHITE);
+                                        button.setBackground(drawable);
+
+                                        button.setOnClickListener(new View.OnClickListener() {
+                                            @Override
+                                            public void onClick(View v) {
+                                                downloadpdf(url, pdfName);
+                                            }
+                                        });
+
+
+
+
+                                        Button button2 = new Button(getContext());
+                                        LinearLayout.LayoutParams buttonParams2 = new LinearLayout.LayoutParams(
+                                                LinearLayout.LayoutParams.MATCH_PARENT,
+                                                LinearLayout.LayoutParams.MATCH_PARENT
+                                        );
+                                        buttonParams2.gravity = Gravity.CENTER; // Align button to the end of the layout
+                                        button2.setLayoutParams(buttonParams2);
+                                        button2.setText("View");
+                                        buttonParams2.setMargins(30, 15, 30, 15);
+                                        button2.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.purple_200));
+                                        button2.setTextColor(Color.WHITE);
+                                        button2.setBackground(drawable);
+
+                                        button2.setOnClickListener(new View.OnClickListener() {
+                                            @Override
+                                            public void onClick(View v) {
+                                                String pdfUrl = url;
+                                                Intent intent = new Intent(Intent.ACTION_VIEW);
+                                                intent.setDataAndType(Uri.parse(pdfUrl), "application/pdf");
+                                                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION); // Grant read permissions
+                                                try {
+                                                    startActivity(intent);
+                                                } catch (ActivityNotFoundException e) {
+                                                    // Handle the exception if no PDF viewer app installed
+                                                    Toast.makeText(getContext(), "No PDF viewer installed", Toast.LENGTH_SHORT).show();
+                                                }
+                                            }
+                                        });
+
+                                        Button button3 = new Button(getContext());
+                                        LinearLayout.LayoutParams buttonParams3 = new LinearLayout.LayoutParams(
+                                                LinearLayout.LayoutParams.MATCH_PARENT,
+                                                LinearLayout.LayoutParams.MATCH_PARENT
+                                        );
+                                        buttonParams3.gravity = Gravity.CENTER; // Align button to the end of the layout
+                                        button3.setLayoutParams(buttonParams2);
+                                        button3.setText("Save");
+                                        buttonParams3.setMargins(30, 15, 30, 15);
+                                        button3.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.purple_200));
+                                        button3.setTextColor(Color.WHITE);
+                                        button3.setBackground(drawable);
+                                        button3.setOnClickListener(new View.OnClickListener() {
+                                            @Override
+                                            public void onClick(View v) {
+                                                FirebaseUser currentUser = auth.getCurrentUser();
+
+                                                writeNewUser(currentUser.getUid(), childSnapshot.getKey(), grandchildSnapshot.getKey());
+
+                                            }
+                                        });
+
+
+                                        layout.addView(textView);
+                                        layout.addView(button);
+                                        layout.addView(button2);
+                                        layout.addView(button3);
+
+                                        cardView.addView(layout);
+                                        scrollView.addView(cardView);
+                                        linearLayout.addView(scrollView);
+
+
+                                    }
+
+                                    @Override
+                                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                                    }
+                                });
+
+
+                            }
+
+                        }catch (Exception e){
+                            linearLayout.removeAllViews();
+
+                            assert name != null;
+                            if (name.toLowerCase(Locale.ROOT).contains(key) || title.toLowerCase(Locale.ROOT).contains(key)) {
+
+                                reference.child("PDF").child(childSnapshot.getKey()).child(grandchildSnapshot.getKey()).addListenerForSingleValueEvent(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                        dataPut data = dataSnapshot.getValue(dataPut.class);
+
+
+                                        String title = data.title;
+                                        String abs = data.location;
+                                        String name = data.name;
+                                        String url = data.url;
+                                        String year = data.year;
+                                        String pdfName = data.pdfName;
+
+                                        ScrollView scrollView = new ScrollView(getContext());
+                                        LinearLayout.LayoutParams scroll = new LinearLayout.LayoutParams(
+                                                LinearLayout.LayoutParams.MATCH_PARENT,
+                                                LinearLayout.LayoutParams.MATCH_PARENT
+                                        );
+                                        scroll.setMargins(0,0,0,30);
+                                        scrollView.setLayoutParams(scroll);
+
+
+
+
+
+                                        CardView cardView = new CardView(getContext());
+                                        LinearLayout.LayoutParams cardLayoutParams = new LinearLayout.LayoutParams(
+                                                LinearLayout.LayoutParams.MATCH_PARENT,
+                                                LinearLayout.LayoutParams.MATCH_PARENT
+                                        );
+                                        cardLayoutParams.setMargins(30, 10, 30, 10); // Add some bottom margin between card views
+                                        cardView.setLayoutParams(cardLayoutParams);
+                                        cardView.setCardBackgroundColor(ContextCompat.getColor(getContext(), R.color.white));
+                                        cardView.setRadius(50);
+
+
+                                        GradientDrawable drawable = new GradientDrawable();
+                                        drawable.setShape(GradientDrawable.RECTANGLE);
+                                        drawable.setColor(ContextCompat.getColor(getContext(), R.color.purple_200)); // Background color
+                                        drawable.setCornerRadius(50);
+
+
+                                        // Create a LinearLayout to hold TextView and Button
+                                        LinearLayout layout = new LinearLayout(getContext());
+                                        layout.setOrientation(LinearLayout.VERTICAL);
+                                        layout.setLayoutParams(new LinearLayout.LayoutParams(
+                                                LinearLayout.LayoutParams.MATCH_PARENT,
+                                                LinearLayout.LayoutParams.MATCH_PARENT));
+                                        layout.setBackgroundColor(Color.parseColor("#0097B2"));  // Use Color.parseColor to convert the hex color code to an integer
+
+                                        // Create a new TextView for the data entry
+                                        TextView textView = new TextView(getContext());
+                                        LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(
+                                                LinearLayout.LayoutParams.WRAP_CONTENT,
+                                                LinearLayout.LayoutParams.MATCH_PARENT
+                                        );
+                                        textView.setLayoutParams(textParams);
+                                        textView.setPadding(16, 30, 16, 16);
+                                        textView.setText("Title: " + title + "\n \nLocation: " + abs + "\n \nAuthor/s: " + name + "\n \nYear: " + year + "\n");
+                                        textView.setTextColor(ContextCompat.getColor(getContext(), R.color.white));
+                                        textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20); // Set text size
+
+                                        // Create a new Button for downloading PDF
+                                        Button button = new Button(getContext());
+                                        LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(
+                                                LinearLayout.LayoutParams.MATCH_PARENT,
+                                                LinearLayout.LayoutParams.MATCH_PARENT
+                                        );
+                                        buttonParams.gravity = Gravity.CENTER; // Align button to the end of the layout
+                                        button.setLayoutParams(buttonParams);
+                                        button.setText("Download PDF");
+                                        buttonParams.setMargins(30, 15, 30, 15);
+                                        button.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.purple_200));
+                                        button.setTextColor(Color.WHITE);
+                                        button.setBackground(drawable);
+
+                                        button.setOnClickListener(new View.OnClickListener() {
+                                            @Override
+                                            public void onClick(View v) {
+                                                downloadpdf(url, pdfName);
+                                            }
+                                        });
+
+
+
+
+                                        Button button2 = new Button(getContext());
+                                        LinearLayout.LayoutParams buttonParams2 = new LinearLayout.LayoutParams(
+                                                LinearLayout.LayoutParams.MATCH_PARENT,
+                                                LinearLayout.LayoutParams.MATCH_PARENT
+                                        );
+                                        buttonParams2.gravity = Gravity.CENTER; // Align button to the end of the layout
+                                        button2.setLayoutParams(buttonParams2);
+                                        button2.setText("View");
+                                        buttonParams2.setMargins(30, 15, 30, 15);
+                                        button2.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.purple_200));
+                                        button2.setTextColor(Color.WHITE);
+                                        button2.setBackground(drawable);
+
+                                        button2.setOnClickListener(new View.OnClickListener() {
+                                            @Override
+                                            public void onClick(View v) {
+                                                String pdfUrl = url;
+                                                Intent intent = new Intent(Intent.ACTION_VIEW);
+                                                intent.setDataAndType(Uri.parse(pdfUrl), "application/pdf");
+                                                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION); // Grant read permissions
+                                                try {
+                                                    startActivity(intent);
+                                                } catch (ActivityNotFoundException e) {
+                                                    // Handle the exception if no PDF viewer app installed
+                                                    Toast.makeText(getContext(), "No PDF viewer installed", Toast.LENGTH_SHORT).show();
+                                                }
+                                            }
+                                        });
+
+                                        Button button3 = new Button(getContext());
+                                        LinearLayout.LayoutParams buttonParams3 = new LinearLayout.LayoutParams(
+                                                LinearLayout.LayoutParams.MATCH_PARENT,
+                                                LinearLayout.LayoutParams.MATCH_PARENT
+                                        );
+                                        buttonParams3.gravity = Gravity.CENTER; // Align button to the end of the layout
+                                        button3.setLayoutParams(buttonParams2);
+                                        button3.setText("Save");
+                                        buttonParams3.setMargins(30, 15, 30, 15);
+                                        button3.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.purple_200));
+                                        button3.setTextColor(Color.WHITE);
+                                        button3.setBackground(drawable);
+                                        button3.setOnClickListener(new View.OnClickListener() {
+                                            @Override
+                                            public void onClick(View v) {
+                                                FirebaseUser currentUser = auth.getCurrentUser();
+
+                                                writeNewUser(currentUser.getUid(),childSnapshot.getKey(), grandchildSnapshot.getKey());
+
+                                            }
+                                        });
+
+
+                                        layout.addView(textView);
+                                        layout.addView(button);
+                                        layout.addView(button2);
+                                        layout.addView(button3);
+
+                                        cardView.addView(layout);
+                                        scrollView.addView(cardView);
+                                        linearLayout.addView(scrollView);
+
+                                    }
+
+                                    @Override
+                                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                                    }
+                                });
+
+
+                            }
+
+
+                        }
+
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                linearLayout.removeAllViews();
+                Log.e(TAG, "Database error: " + databaseError.getMessage());
+                Toast.makeText(getContext(), "error", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+
+    private void loadall(){
+        linearLayout.removeAllViews();
 
         StringBuilder dataBuilder = new StringBuilder();
-
-
 
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser(); // Get current user
 
         reference.child("PDF").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                LinearLayout linearLayout = view.findViewById(R.id.linear);
+
 
                 for (DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
                     for (DataSnapshot pdfSnapshot : userSnapshot.getChildren()) {
@@ -101,6 +547,18 @@ public class homefrag extends Fragment {
                         String year = data.year;
                         String pdfName = data.pdfName;
 
+                        ScrollView scrollView = new ScrollView(getContext());
+                        LinearLayout.LayoutParams scroll = new LinearLayout.LayoutParams(
+                                LinearLayout.LayoutParams.MATCH_PARENT,
+                                LinearLayout.LayoutParams.MATCH_PARENT
+                        );
+                        scroll.setMargins(0,0,0,30);
+                        scrollView.setLayoutParams(scroll);
+
+
+
+
+
                         CardView cardView = new CardView(getContext());
                         LinearLayout.LayoutParams cardLayoutParams = new LinearLayout.LayoutParams(
                                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -112,12 +570,19 @@ public class homefrag extends Fragment {
                         cardView.setRadius(50);
 
 
+                        GradientDrawable drawable = new GradientDrawable();
+                        drawable.setShape(GradientDrawable.RECTANGLE);
+                        drawable.setColor(ContextCompat.getColor(getContext(), R.color.purple_200)); // Background color
+                        drawable.setCornerRadius(50);
+
+
                         // Create a LinearLayout to hold TextView and Button
                         LinearLayout layout = new LinearLayout(getContext());
                         layout.setOrientation(LinearLayout.VERTICAL);
                         layout.setLayoutParams(new LinearLayout.LayoutParams(
                                 LinearLayout.LayoutParams.MATCH_PARENT,
                                 LinearLayout.LayoutParams.MATCH_PARENT));
+                        layout.setBackgroundColor(Color.parseColor("#0097B2"));  // Use Color.parseColor to convert the hex color code to an integer
 
                         // Create a new TextView for the data entry
                         TextView textView = new TextView(getContext());
@@ -127,8 +592,8 @@ public class homefrag extends Fragment {
                         );
                         textView.setLayoutParams(textParams);
                         textView.setPadding(16, 30, 16, 16);
-                        textView.setText("Title: " + title + "\nLocation: " + abs + "\nName: " + name + "\nYear: " + year + "");
-                        textView.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
+                        textView.setText("Title: " + title + "\n \nLocation: " + abs + "\n \nAuthor/s: " + name + "\n \nYear: " + year + "\n");
+                        textView.setTextColor(ContextCompat.getColor(getContext(), R.color.white));
                         textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20); // Set text size
 
                         // Create a new Button for downloading PDF
@@ -140,14 +605,21 @@ public class homefrag extends Fragment {
                         buttonParams.gravity = Gravity.CENTER; // Align button to the end of the layout
                         button.setLayoutParams(buttonParams);
                         button.setText("Download PDF");
-                        button.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.white));
-                        button.setTextColor(Color.BLACK);
+                        buttonParams.setMargins(30, 15, 30, 15);
+                        button.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.purple_200));
+                        button.setTextColor(Color.WHITE);
+                        button.setBackground(drawable);
+
                         button.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
                                 downloadpdf(url, pdfName);
                             }
                         });
+
+
+
+
                         Button button2 = new Button(getContext());
                         LinearLayout.LayoutParams buttonParams2 = new LinearLayout.LayoutParams(
                                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -156,8 +628,11 @@ public class homefrag extends Fragment {
                         buttonParams2.gravity = Gravity.CENTER; // Align button to the end of the layout
                         button2.setLayoutParams(buttonParams2);
                         button2.setText("View");
-                        button2.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.white));
-                        button2.setTextColor(Color.BLACK);
+                        buttonParams2.setMargins(30, 15, 30, 15);
+                        button2.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.purple_200));
+                        button2.setTextColor(Color.WHITE);
+                        button2.setBackground(drawable);
+
                         button2.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
@@ -183,15 +658,16 @@ public class homefrag extends Fragment {
                         buttonParams3.gravity = Gravity.CENTER; // Align button to the end of the layout
                         button3.setLayoutParams(buttonParams2);
                         button3.setText("Save");
-                        button3.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.white));
-                        button3.setTextColor(Color.BLACK);
+                        buttonParams3.setMargins(30, 15, 30, 15);
+                        button3.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.purple_200));
+                        button3.setTextColor(Color.WHITE);
+                        button3.setBackground(drawable);
                         button3.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
                                 FirebaseUser currentUser = auth.getCurrentUser();
 
-                                 writeNewUser(currentUser.getUid(),id,mainid);
-                                 Toast.makeText(getContext(),"Saved Successfully",Toast.LENGTH_LONG).show();
+                                writeNewUser(currentUser.getUid(),id,mainid);
 
                             }
                         });
@@ -203,7 +679,8 @@ public class homefrag extends Fragment {
                         layout.addView(button3);
 
                         cardView.addView(layout);
-                        linearLayout.addView(cardView);
+                        scrollView.addView(cardView);
+                        linearLayout.addView(scrollView);
 
                         // Create views and add to layout...
                     }
@@ -234,8 +711,14 @@ public class homefrag extends Fragment {
                 // Handle potential errors here
             }
         });
+
     }
-    private ProgressDialog progressDialog;
+
+    void handleEmptySearch() {
+        loadall();
+    }
+
+
 
     private void downloadpdf(String urlpdf,String pdfName){
         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(urlpdf));
@@ -319,11 +802,9 @@ public class homefrag extends Fragment {
                                 @Override
                                 public void onComplete(@NonNull Task<Void> task) {
                                     if (task.isSuccessful()) {
-                                        // Data successfully saved
-                                        Log.d(TAG, "User data saved for userId: " + userId + ", name: " + name);
+                                        Toast.makeText(getContext(),"Saved Successfully",Toast.LENGTH_LONG).show();
                                     } else {
                                         // Handle the error
-                                        Log.w(TAG, "Error saving user data for userId: " + userId + ", name: " + name, task.getException());
                                     }
                                 }
                             });
@@ -336,9 +817,12 @@ public class homefrag extends Fragment {
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
                 // Handle errors
-                Log.w(TAG, "Error reading user data for userId: " + userId + ", name: " + name, databaseError.toException());
             }
         });
 
     }
+
+
+
+
 }

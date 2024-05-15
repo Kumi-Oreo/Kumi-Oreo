@@ -9,14 +9,38 @@
 
 
     <LinearLayout
-        android:layout_marginTop="60dp"
-        android:id="@+id/linear"
         android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content">
+
+        <EditText
+            android:visibility="invisible"
+            android:id="@+id/searchField"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"
+            android:layout_margin="16dp"
+            android:background="@drawable/srcbg"
+            android:gravity="right"
+            android:hint="Search"
+            android:imeOptions="actionSearch"
+            android:inputType="text" />
+
+        <LinearLayout
+            android:id="@+id/linear"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+
+
+
+
+        </LinearLayout>
 
 
     </LinearLayout>
+
 
 
 </ScrollView>

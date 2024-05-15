@@ -38,7 +38,7 @@ public class HomePage extends AppCompatActivity {
     GoogleSignInClient mGoogleSignClient;
     ConstraintLayout constraintLayout;
     LinearLayout linearLayout;
-    Button showHide,home,post,task,saved;
+    Button showHide,home,post,task,saved,about,guide,how;
 
 
 
@@ -62,12 +62,16 @@ public class HomePage extends AppCompatActivity {
         task = findViewById(R.id.task);
         saved = findViewById(R.id.saved);
 
+        about = findViewById(R.id.AboutUs);
+        guide = findViewById(R.id.guidlines);
+        how = findViewById(R.id.write);
+
 
         constraintLayout = findViewById(R.id.buttonsLayout);
         linearLayout = findViewById(R.id.main);
 
         getSupportFragmentManager().beginTransaction()
-                .replace(R.id.main, new defaultfrag())
+                .replace(R.id.main, new homefrag())
                 .addToBackStack(null)
                 .commit();
 
@@ -159,6 +163,49 @@ public class HomePage extends AppCompatActivity {
                 }
                 getSupportFragmentManager().beginTransaction()
                         .replace(R.id.main, new saveresfrag())
+                        .addToBackStack(null)
+                        .commit();
+            }
+        });
+
+        about.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.main);
+                if (currentFragment != null) {
+                    getSupportFragmentManager().beginTransaction().remove(currentFragment).commit();
+                }
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.main, new aboutus())
+                        .addToBackStack(null)
+                        .commit();
+
+            }
+        });
+
+        guide.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.main);
+                if (currentFragment != null) {
+                    getSupportFragmentManager().beginTransaction().remove(currentFragment).commit();
+                }
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.main, new guidlines())
+                        .addToBackStack(null)
+                        .commit();
+            }
+        });
+
+        how.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.main);
+                if (currentFragment != null) {
+                    getSupportFragmentManager().beginTransaction().remove(currentFragment).commit();
+                }
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.main, new write())
                         .addToBackStack(null)
                         .commit();
             }
@@ -267,7 +314,7 @@ public class HomePage extends AppCompatActivity {
                 getSupportFragmentManager().beginTransaction().remove(currentFragment).commit();
             }
             getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.main, new defaultfrag())
+                    .replace(R.id.main, new homefrag())
                     .addToBackStack(null)
                     .commit();
         }
